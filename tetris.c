@@ -6,33 +6,30 @@
 #define MAX_FILA 5   // Capacidade fixa da fila
 #define MAX_PILHA 3  // Capacidade fixa da pilha
 
-// --- Definição da Struct ---
+// --- Estrutura de Dados ---
 struct Peca {
-    char tipo; // Ex: 'I', 'O', 'T', 'L'
-    int id;   // Identificador unico
+    char tipo; 
+    int id;   
 };
 
-// --- Variaveis Globais (Controle da Fila e Pilha) ---
+// --- Variaveis Globais (Controle de Estado) ---
 struct Peca fila[MAX_FILA];
-int frente = 0;         // Indice da proxima remocao (Fila)
-int tras = 0;           // Indice da proxima insercao (Fila)
-int tamanho_fila = 0;   // Contador de elementos na fila
+int frente = 0;         
+int tras = 0;           
+int tamanho_fila = 0;   
 
 struct Peca pilha[MAX_PILHA];
-int topo = -1;          // Indice do topo da pilha (-1 = vazia)
+int topo = -1;          
 
-int contador_id = 0;    // Contador global para gerar IDs unicos
+int contador_id = 0;    // Contador global para IDs unicos
 
 // --- Funcoes de Utilitario ---
 
 struct Peca gerarPeca() {
     struct Peca nova_peca;
-    char tipos[] = {'I', 'O', 'T', 'L', 'S', 'Z', 'J'}; // Tipos de pecas
+    char tipos[] = {'I', 'O', 'T', 'L', 'S', 'Z', 'J'}; 
     
-    // Sorteia o tipo
     nova_peca.tipo = tipos[rand() % 7];
-    
-    // Atribui ID unico e avanca o contador
     nova_peca.id = contador_id++;
     
     return nova_peca;
@@ -43,29 +40,21 @@ struct Peca gerarPeca() {
 int filaVazia() { return tamanho_fila == 0; }
 int filaCheia() { return tamanho_fila == MAX_FILA; }
 
-// Insere uma peca no final da fila (Enqueue)
 void enqueue(struct Peca nova_peca) {
-    if (filaCheia()) {
-        // Nao deve acontecer no loop principal, mas e uma boa pratica de programacao
-        printf("\n[ALERTA] Fila cheia. Impossivel adicionar nova peca.\n");
-        return;
-    }
+    if (filaCheia()) return;
     
     fila[tras] = nova_peca;
     tras = (tras + 1) % MAX_FILA;
     tamanho_fila++;
 }
 
-// Remove a peca da frente da fila (Dequeue)
 struct Peca dequeue() {
     if (filaVazia()) {
-        // Retorna uma peca invalida em caso de erro
         struct Peca peca_erro = {'X', -1}; 
         return peca_erro;
     }
 
     struct Peca peca_removida = fila[frente];
-    
     frente = (frente + 1) % MAX_FILA;
     tamanho_fila--;
     
@@ -77,18 +66,13 @@ struct Peca dequeue() {
 int pilhaVazia() { return topo == -1; }
 int pilhaCheia() { return topo == MAX_PILHA - 1; }
 
-// Adiciona uma peca ao topo da pilha (Push)
 void push(struct Peca peca) {
-    if (pilhaCheia()) {
-        printf("\n[ALERTA] Pilha de Reserva cheia! Nao e possivel reservar mais pecas.\n");
-        return;
-    }
+    if (pilhaCheia()) return;
     
     topo++;
     pilha[topo] = peca;
 }
 
-// Remove a peca do topo da pilha (Pop)
 struct Peca pop() {
     if (pilhaVazia()) {
         struct Peca peca_erro = {'X', -1};
@@ -106,21 +90,20 @@ struct Peca pop() {
 void exibirPilha() {
     printf("Pilha de Reserva (Topo -> Base): ");
     if (pilhaVazia()) {
-        printf("[Vazia]\n");
+        printf("[Vazia]");
         return;
     }
     
     for (int i = topo; i >= 0; i--) {
         printf("[%c %d]", pilha[i].tipo, pilha[i].id);
     }
-    printf("\n");
 }
 
 void exibirFila() {
-    printf("Fila de Pecas [Total: %d/%d]: ", tamanho_fila, MAX_FILA);
+    printf("Fila de Pecas: ");
 
     if (filaVazia()) {
-        printf("[Vazia]\n");
+        printf("[Vazia]");
         return;
     }
 
@@ -131,14 +114,14 @@ void exibirFila() {
         i = (i + 1) % MAX_FILA;
         count++;
     }
-    printf("\n");
 }
 
 void exibirEstado() {
-    printf("\n=== ESTADO ATUAL ===\n");
+    printf("\n\n=== ESTADO ATUAL ===\n");
     exibirFila();
+    printf(" "); // Separador visual
     exibirPilha();
-    printf("======================\n");
+    printf("\n======================\n");
 }
 
 // --- Funcoes de Acao do Jogador ---
@@ -151,15 +134,13 @@ void jogarPecaAcao() {
     }
 
     struct Peca peca_jogada = dequeue();
-    printf("\nSUCESSO: Peca [%c %d] jogada no tabuleiro!\n", peca_jogada.tipo, peca_jogada.id);
+    printf("\nSUCESSO: Peca [%c %d] jogada no tabuleiro.\n", peca_jogada.tipo, peca_jogada.id);
 
-    // Regra: Apos jogar uma peca, uma nova peca e gerada para manter a fila cheia
     struct Peca nova = gerarPeca();
     enqueue(nova);
-    printf("[Aviso] Nova peca [%c %d] gerada e adicionada a fila.\n", nova.tipo, nova.id);
 }
 
-// ACAO 2: Move a peca da frente da fila para a pilha de reserva
+// ACAO 2: Move a peca da frente da fila para a pilha de reserva e gera uma nova
 void reservarPecaAcao() {
     if (filaVazia()) {
         printf("\n[ERRO] A fila esta vazia! Nao ha pecas para reservar.\n");
@@ -170,18 +151,13 @@ void reservarPecaAcao() {
         return;
     }
 
-    // 1. Remove da Fila
     struct Peca peca_reservada = dequeue();
-    
-    // 2. Adiciona a Pilha
     push(peca_reservada);
     
-    printf("\nSUCESSO: Peca [%c %d] reservada com sucesso!\n", peca_reservada.tipo, peca_reservada.id);
+    printf("\nSUCESSO: Peca [%c %d] reservada com sucesso.\n", peca_reservada.tipo, peca_reservada.id);
 
-    // Regra: Uma nova peca e gerada para manter a fila cheia
     struct Peca nova = gerarPeca();
     enqueue(nova);
-    printf("[Aviso] Nova peca [%c %d] gerada e adicionada a fila.\n", nova.tipo, nova.id);
 }
 
 // ACAO 3: Usa a peca do topo da pilha de reserva
@@ -191,12 +167,59 @@ void usarReservaAcao() {
         return;
     }
 
-    // Remove da Pilha
     struct Peca peca_usada = pop();
-    
-    printf("\nSUCESSO: Peca reservada [%c %d] utilizada no jogo!\n", peca_usada.tipo, peca_usada.id);
-    // Regra: Nenhuma nova peca e gerada nesta acao
+    printf("\nSUCESSO: Peca reservada [%c %d] utilizada no jogo.\n", peca_usada.tipo, peca_usada.id);
 }
+
+// ACAO 4: Troca a peca da frente da fila com o topo da pilha
+void trocarPecaAtual() {
+    if (filaVazia() || pilhaVazia()) {
+        printf("\n[ERRO] A fila e/ou a pilha estao vazias. Impossivel trocar.\n");
+        return;
+    }
+    
+    struct Peca temp;
+    
+    // Armazena a peca da frente da fila
+    temp = fila[frente];
+    
+    // Move a peca do topo da pilha para a frente da fila
+    fila[frente] = pilha[topo];
+    
+    // Move a peca original da fila para o topo da pilha
+    pilha[topo] = temp;
+    
+    printf("\nSUCESSO: Troca 1x1 realizada entre a frente da Fila e o Topo da Pilha.\n");
+    // Nao ha mudanca no tamanho da fila/pilha ou nos ponteiros 'frente'/'topo'
+}
+
+// ACAO 5: Alterna as tres primeiras pecas da fila com as tres da pilha
+void trocaMultipla() {
+    if (tamanho_fila < 3 || topo < MAX_PILHA - 1) {
+        printf("\n[ERRO] A Troca Multipla requer 3 pecas na Fila e 3 na Pilha. Impossivel realizar.\n");
+        return;
+    }
+    
+    struct Peca temp_fila[MAX_PILHA]; // Array temporario para as 3 pecas da fila
+    
+    // 1. Armazena as 3 primeiras pecas da Fila
+    for (int i = 0; i < MAX_PILHA; i++) {
+        temp_fila[i] = fila[(frente + i) % MAX_FILA];
+    }
+    
+    // 2. Move as 3 pecas da Pilha para as 3 primeiras posicoes da Fila
+    for (int i = 0; i < MAX_PILHA; i++) {
+        fila[(frente + i) % MAX_FILA] = pilha[i];
+    }
+    
+    // 3. Move as 3 pecas temporarias (originais da Fila) para a Pilha
+    for (int i = 0; i < MAX_PILHA; i++) {
+        pilha[i] = temp_fila[i];
+    }
+    
+    printf("\nSUCESSO: Troca em Bloco realizada entre os 3 primeiros da Fila e as 3 da Pilha.\n");
+}
+
 
 // --- Funcao Principal ---
 int main() {
@@ -220,6 +243,8 @@ int main() {
         printf("1. Jogar peca (Remove da Fila)\n");
         printf("2. Reservar peca (Fila -> Pilha)\n");
         printf("3. Usar peca reservada (Remove da Pilha)\n");
+        printf("4. Trocar peca da frente da fila com o topo da pilha (1x1)\n");
+        printf("5. Troca multipla (3 da Fila x 3 da Pilha)\n");
         printf("0. Sair\n");
         printf("Escolha uma acao: ");
         
@@ -238,6 +263,12 @@ int main() {
                 break;
             case 3:
                 usarReservaAcao();
+                break;
+            case 4:
+                trocarPecaAtual();
+                break;
+            case 5:
+                trocaMultipla();
                 break;
             case 0:
                 printf("\nSaindo do simulador. Ate mais!\n");
