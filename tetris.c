@@ -1,56 +1,153 @@
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
 
-// Desafio Tetris Stack
-// Tema 3 - Integração de Fila e Pilha
-// Este código inicial serve como base para o desenvolvimento do sistema de controle de peças.
-// Use as instruções de cada nível para desenvolver o desafio.
+#define MAX_FILA 5 // Capacidade maxima da fila de pecas
 
+// --- Definição da Struct ---
+// Estrutura para representar uma peça do Tetris
+struct Peca {
+    char tipo; // Ex: 'I', 'O', 'T', 'L'
+    int id;   // Identificador unico
+};
+
+// --- Variaveis Globais (Controle da Fila e IDs) ---
+struct Peca fila[MAX_FILA];
+int frente = 0;         // Indice para a proxima remocao (dequeue)
+int tras = 0;           // Indice para a proxima insercao (enqueue)
+int tamanho_fila = 0;   // Numero atual de elementos na fila
+int contador_id = 0;    // Contador global para gerar IDs unicos
+
+// --- Funcoes de Utilitario ---
+
+// Verifica se a fila esta vazia
+int filaVazia() {
+    return tamanho_fila == 0;
+}
+
+// Verifica se a fila esta cheia
+int filaCheia() {
+    return tamanho_fila == MAX_FILA;
+}
+
+// Gera uma peca aleatoria com um ID unico
+struct Peca gerarPeca() {
+    struct Peca nova_peca;
+    char tipos[] = {'I', 'O', 'T', 'L'}; // Pecas disponiveis
+    
+    // Sorteia o tipo
+    nova_peca.tipo = tipos[rand() % 4];
+    
+    // Atribui ID e incrementa o contador global
+    nova_peca.id = contador_id++;
+    
+    return nova_peca;
+}
+
+// Exibe o estado atual da fila de forma clara
+void exibirFila() {
+    printf("\nCuradoria de Pecas [Total: %d/%d]\n", tamanho_fila, MAX_FILA);
+    printf("Fila: ");
+
+    if (filaVazia()) {
+        printf("[Vazia]\n");
+        return;
+    }
+
+    int i = frente;
+    int count = 0;
+    while (count < tamanho_fila) {
+        printf("[%c %d]", fila[i].tipo, fila[i].id);
+        i = (i + 1) % MAX_FILA; // Avanca de forma circular
+        count++;
+    }
+    printf("\n");
+}
+
+// --- Funcoes de Manipulacao da Fila ---
+
+// 1. Remove a peca da frente da fila (Dequeue)
+void jogarPeca() {
+    if (filaVazia()) {
+        printf("\nERRO: A fila de pecas esta vazia! Nao ha pecas para jogar.\n");
+        return;
+    }
+
+    struct Peca peca_jogada = fila[frente];
+    
+    // Avanca o ponteiro da frente de forma circular
+    frente = (frente + 1) % MAX_FILA;
+    tamanho_fila--;
+    
+    printf("\nSUCESSO: Peca [%c %d] jogada! (Removida da frente)\n", peca_jogada.tipo, peca_jogada.id);
+}
+
+// 2. Insere uma nova peca no final da fila (Enqueue)
+void inserirPeca() {
+    if (filaCheia()) {
+        printf("\nERRO: A fila de pecas esta cheia! Jogue uma peca primeiro.\n");
+        return;
+    }
+
+    struct Peca nova_peca = gerarPeca();
+    
+    // Insere a nova peca na posicao 'tras'
+    fila[tras] = nova_peca;
+    
+    // Avanca o ponteiro 'tras' de forma circular
+    tras = (tras + 1) % MAX_FILA;
+    tamanho_fila++;
+    
+    printf("\nSUCESSO: Nova peca [%c %d] inserida no final da fila.\n", nova_peca.tipo, nova_peca.id);
+}
+
+
+// --- Funcao Principal (Fluxo do Programa) ---
 int main() {
+    int opcao;
 
-    // 🧩 Nível Novato: Fila de Peças Futuras
-    //
-    // - Crie uma struct Peca com os campos: tipo (char) e id (int).
-    // - Implemente uma fila circular com capacidade para 5 peças.
-    // - Crie funções como inicializarFila(), enqueue(), dequeue(), filaCheia(), filaVazia().
-    // - Cada peça deve ser gerada automaticamente com um tipo aleatório e id sequencial.
-    // - Exiba a fila após cada ação com uma função mostrarFila().
-    // - Use um menu com opções como:
-    //      1 - Jogar peça (remover da frente)
-    //      0 - Sair
-    // - A cada remoção, insira uma nova peça ao final da fila.
+    // Inicializa o gerador de numeros aleatorios para sortear o tipo da peca
+    srand(time(NULL));
 
+    // --- Inicializacao da Fila (Requisito: 5 elementos) ---
+    printf("--- INICIALIZANDO FILA DE PECAS ---\n");
+    for (int i = 0; i < MAX_FILA; i++) {
+        inserirPeca();
+    }
+    printf("\nFila inicializada com sucesso!\n");
+    
+    // Loop principal do menu
+    do {
+        exibirFila();
+        
+        printf("\n--- OPCOES DE ACAO ---\n");
+        printf("1. Jogar peca (Dequeue)\n");
+        printf("2. Inserir nova peca (Enqueue)\n");
+        printf("0. Sair\n");
+        printf("Escolha uma acao: ");
+        
+        if (scanf("%d", &opcao) != 1) {
+            printf("\nOpcao invalida. Digite um numero.\n");
+            while (getchar() != '\n'); // Limpa o buffer de entrada
+            continue;
+        }
 
-
-    // 🧠 Nível Aventureiro: Adição da Pilha de Reserva
-    //
-    // - Implemente uma pilha linear com capacidade para 3 peças.
-    // - Crie funções como inicializarPilha(), push(), pop(), pilhaCheia(), pilhaVazia().
-    // - Permita enviar uma peça da fila para a pilha (reserva).
-    // - Crie um menu com opção:
-    //      2 - Enviar peça da fila para a reserva (pilha)
-    //      3 - Usar peça da reserva (remover do topo da pilha)
-    // - Exiba a pilha junto com a fila após cada ação com mostrarPilha().
-    // - Mantenha a fila sempre com 5 peças (repondo com gerarPeca()).
-
-
-    // 🔄 Nível Mestre: Integração Estratégica entre Fila e Pilha
-    //
-    // - Implemente interações avançadas entre as estruturas:
-    //      4 - Trocar a peça da frente da fila com o topo da pilha
-    //      5 - Trocar os 3 primeiros da fila com as 3 peças da pilha
-    // - Para a opção 4:
-    //      Verifique se a fila não está vazia e a pilha tem ao menos 1 peça.
-    //      Troque os elementos diretamente nos arrays.
-    // - Para a opção 5:
-    //      Verifique se a pilha tem exatamente 3 peças e a fila ao menos 3.
-    //      Use a lógica de índice circular para acessar os primeiros da fila.
-    // - Sempre valide as condições antes da troca e informe mensagens claras ao usuário.
-    // - Use funções auxiliares, se quiser, para modularizar a lógica de troca.
-    // - O menu deve ficar assim:
-    //      4 - Trocar peça da frente com topo da pilha
-    //      5 - Trocar 3 primeiros da fila com os 3 da pilha
-
+        switch (opcao) {
+            case 1:
+                jogarPeca();
+                break;
+            case 2:
+                inserirPeca();
+                break;
+            case 0:
+                printf("\nSaindo do simulador. Ate mais!\n");
+                break;
+            default:
+                printf("\nComando desconhecido. Tente novamente.\n");
+                break;
+        }
+    } while (opcao != 0);
 
     return 0;
 }
-
